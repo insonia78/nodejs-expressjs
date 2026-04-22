@@ -4,6 +4,10 @@ export interface GenerateTokenRequestBody {
 }
 export interface GenerateTokenResponse extends MessageResponse {
     token: string;
+    refreshToken: string;
+}
+export interface RefreshTokenRequestBody {
+    refreshToken: string;
 }
 export interface AuthErrorResponse extends MessageResponse {
 }
