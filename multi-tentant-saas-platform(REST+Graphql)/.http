@@ -1,0 +1,67 @@
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### The basic request
+# GET {{baseUrl}}
+
+# ### Get all tasks 
+# # @name getAllTasks
+# GET {{baseUrl}}/tasks?limit=2&offset=2
+
+# ### Get all in progress tasks
+# # @name getAllInProgress
+# GET {{baseUrl}}/tasks?status=IN_PROGRESS
+
+# ### Get all with serach query
+# # @name getAllWithSearch
+# GET {{baseUrl}}/tasks?search=tho
+
+# ### Get all filtered by labels
+# # @name getAllFilteredByLabels
+# GET {{baseUrl}}/tasks?labels=urgent,bug
+
+# ### Get all sorted
+# # @name getAllSorted
+# GET {{baseUrl}}/tasks?sortBy=status&sortOrder=ASC
+
+# ### Get one task
+# GET {{baseUrl}}/tasks/{{taskId}}
+
+### Create new task
+# @name createTask
+POST {{baseUrl}}/auth/token
+Content-Type: {{contentType}}
+
+{
+  "title": "Learn NestJS",
+  "description": "Complete the NestJS course",
+  "status": "OPEN",
+  "userId": "49dfc5bf-ada7-4316-a356-d5f992fea5fc",
+  "labels": [
+    {
+      "name": "urgent"
+    }
+  ]
+}
+
+###
+
+@accessToken = {{createTask.response.body.token}}
+
+### Create new task
+# @name createTask
+POST {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Learn NestJS",
+  "description": "Complete the NestJS course",
+  "status": "OPEN",
+  "userId": "49dfc5bf-ada7-4316-a356-d5f992fea5fc",
+  "labels": [
+    {
+      "name": "urgent"
+    }
+  ]
+}
