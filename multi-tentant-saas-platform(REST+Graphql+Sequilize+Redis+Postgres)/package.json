@@ -1,0 +1,45 @@
+{
+  "name": "part-0",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "tsc && node dist/index.js --port 3030",
+    "dev": "nodemon --exec ts-node index.ts",
+    "build": "tsc",
+    "db:seed": "ts-node --transpile-only scripts/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.1",
+    "graphql": "^16.11.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.16.3",
+    "pg-hstore": "^2.3.4",
+    "redis": "^5.8.2"
+    ,"sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.6",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^25.5.0",
+    "@types/supertest": "^6.0.3",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.1.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.4"
+  }
+}

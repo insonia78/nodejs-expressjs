@@ -1,0 +1,152 @@
+@baseUrl = http://localhost:4000
+@json = Content-Type: application/json
+
+### Health - gateway
+GET {{baseUrl}}/health
+
+### Health - catalog
+GET {{baseUrl}}/api/catalog/health
+
+### Health - users
+GET {{baseUrl}}/api/users/health
+
+### Register customer
+POST {{baseUrl}}/api/users/auth/register
+{{json}}
+
+{
+  "name": "Ada Shopper",
+  "email": "ada@example.com",
+  "password": "secret123"
+}
+
+### Login (copy token from response)
+# @name login
+POST {{baseUrl}}/api/users/auth/login
+{{json}}
+
+{
+  "email": "ada@example.com",
+  "password": "secret123"
+}
+
+### Set token manually after login
+@accessToken = {{login.response.body.token}}
+
+### Create product
+POST {{baseUrl}}/api/catalog/products
+{{json}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "Wireless Mouse",
+  "slug": "wireless-mouse",
+  "description": "Ergonomic wireless mouse",
+  "price": 49.99,
+  "currency": "USD",
+  "category": "electronics",
+  "tags": ["mouse", "wireless"],
+  "stock": 35,
+  "active": true
+}
+
+### List products with filtering
+GET {{baseUrl}}/api/catalog/products
+
+### Get cart for user
+GET {{baseUrl}}/api/cart/cart?userId=user_123
+Authorization: Bearer {{accessToken}}
+
+### Add item to cart
+POST {{baseUrl}}/api/cart/cart/items
+{{json}}
+
+{
+  "userId": "user_123",
+  "productId": "69ec26599783865adc01ce1b",
+  "quantity": 2
+}
+
+### Update cart item quantity
+PATCH {{baseUrl}}/api/cart/cart/items/69ec26599783865adc01ce1b
+{{json}}
+
+{
+  "userId": "user_123",
+  "quantity": 3
+}
+
+### Checkout cart
+POST {{baseUrl}}/api/cart/cart/checkout
+{{json}}
+
+{
+  "userId": "user_123"
+}
+
+### List orders
+GET {{baseUrl}}/api/orders/orders?userId=user_123
+
+### Update order lifecycle to shipped
+PATCH {{baseUrl}}/api/orders/orders/69ece8cc52b283bf883f6bc8/status
+{{json}}
+
+{
+  "status": "shipped"
+}
+
+### Update order lifecycle to delivered
+PATCH {{baseUrl}}/api/orders/orders/69ece8cc52b283bf883f6bc8/status
+{{json}}
+
+{
+  "status": "delivered"
+}
+
+### List inventory
+GET {{baseUrl}}/api/inventory/inventory
+
+### Process payment manually
+POST {{baseUrl}}/api/payments/payments/process
+{{json}}
+
+{
+  "orderId": "69ece8cc52b283bf883f6bc8",
+  "amount": 99.99,
+  "currency": "USD"
+}
+
+### GraphQL - list products
+POST {{baseUrl}}/graphql
+{{json}}
+
+{
+  "query": "query Products($search: String){ products(search: $search){ id name price stock } }",
+  "variables": {
+    "search": "wireless"
+  }
+}
+
+### GraphQL - register user
+POST {{baseUrl}}/graphql
+{{json}}
+
+{
+  "query": "mutation Register($name:String!,$email:String!,$password:String!){ register(name:$name,email:$email,password:$password){ token user { id email role } } }",
+  "variables": {
+    "name": "Graph User",
+    "email": "graph.user.{{$guid}}@example.com",
+    "password": "secret123"
+  }
+}
+
+### GraphQL - checkout
+POST {{baseUrl}}/graphql
+{{json}}
+
+{
+  "query": "mutation Checkout($userId:String!){ checkout(userId:$userId) }",
+  "variables": {
+    "userId": "user_123"
+  }
+}

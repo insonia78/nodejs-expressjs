@@ -1,0 +1,279 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: curl -s http://localhost:9200/_cluster/health | grep -q '"status":"yellow"\|"status":"green"'
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/api-gateway/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+      CATALOG_SERVICE_URL: http://catalog-service:4001
+      CART_SERVICE_URL: http://cart-service:4002
+      ORDER_SERVICE_URL: http://order-service:4003
+      PAYMENT_SERVICE_URL: http://payment-service:4004
+      INVENTORY_SERVICE_URL: http://inventory-service:4005
+      USER_SERVICE_URL: http://user-service:4006
+    ports:
+      - "4000:4000"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      catalog-service:
+        condition: service_healthy
+      cart-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      inventory-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/catalog-service/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4001
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+    ports:
+      - "4001:4001"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4001/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  cart-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/cart-service/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4002
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+      CATALOG_SERVICE_URL: http://catalog-service:4001
+      PAYMENT_SERVICE_URL: http://payment-service:4004
+    ports:
+      - "4002:4002"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4002/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  order-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/order-service/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4003
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+    ports:
+      - "4003:4003"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4003/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/payment-service/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4004
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+    ports:
+      - "4004:4004"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4004/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/inventory-service/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4005
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+    ports:
+      - "4005:4005"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4005/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: services/user-service/index.ts
+    env_file:
+      - .env
+    environment:
+      PORT: 4006
+      MONGO_URI: mongodb://mongo:27017/scalable_ecommerce
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
+    ports:
+      - "4006:4006"
+    volumes:
+      - logs-data:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:4006/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  mongo-data:
+  logs-data:
