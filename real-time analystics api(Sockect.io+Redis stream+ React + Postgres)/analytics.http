@@ -1,0 +1,19 @@
+### Health
+GET http://localhost:4000/health
+
+### Track page view
+POST http://localhost:4000/track
+Content-Type: application/json
+
+{
+  "event": "page_view",
+  "path": "/pricing",
+  "site": "marketing-site",
+  "referrer": "https://google.com",
+  "metadata": {
+    "campaign": "spring-launch"
+  }
+}
+
+### Dashboard metrics
+GET http://localhost:4000/metrics/dashboard

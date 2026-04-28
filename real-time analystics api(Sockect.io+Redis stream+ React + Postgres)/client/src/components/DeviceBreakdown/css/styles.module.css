@@ -1,0 +1,31 @@
+.panel {
+  background: rgba(255, 255, 255, 0.76);
+  border-radius: 24px;
+  padding: 20px;
+  border: 1px solid rgba(23, 32, 42, 0.08);
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.barTrack {
+  background: #efe5d6;
+  border-radius: 999px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.barFill {
+  background: linear-gradient(90deg, #d28c2c, #e5b864);
+  height: 100%;
+}
